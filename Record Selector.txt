@@ -1,0 +1,192 @@
+ 01  FL-FLAGS.
+    64KB ----+----1----+----2----+----3----+----4----+----5----+----6----+----7--
+ ****** ****ZAP****AUTOSAVE********** TOP OF DATA ******************************
+ 000001       IDENTIFICATION DIVISON.
+ 000002       PROGRAM-ID.
+ 000003       AUTHOR. FRANCISCO BORGES.
+ 000004       DATE-WRITTEN.
+ 000005       DATE-COMPILED.
+ 000006       SECURITY.
+ 000007       ****************************************
+ 000008       *                                      *
+ 000009       * SELEÇÃO DE REGISTROS                 *
+ 000010       *                                      *
+ 000011       ****************************************
+ 000012       ENVIRONMENT DIVISION.
+ 000013       CONFIGURATION SECTION.
+ 000014       SPEACIAL-NAMES. DECIMAL-POINT IS COMMA.
+ 000015       INPUT-OUTPUT SECTION.
+ 000016       FILE-CONTROL.
+ 000017       DATA DIVISION.
+ 000018       FILE SECTION.
+ 000019       WORKING-STORAGE SECTION.
+ 000020
+ 000022       *******************************************************
+ 000023       * FLAGS UTILIZADAS PARA CONTROLE DA LOGICA DO PROGRAMA*
+ 000024       *******************************************************
+ 000025          03 FL-FIM-ARQUIVO  PICX(03)   VALUE 'NÃO'.
+ 000026          03 FL-REG-SELECCIONADO  PICX(03)
+ 000027                             PICX(03)   VALUE 'NÃO'.
+ 000028       01    LT-LITRRALS.
+ 000029       *******************************************************
+ 000030       *LITERAIS UTILIZADAS NO PROGRAMA                      *
+ 000031       *******************************************************
+ 000032          03 LT-NAO          PICX(03)   VALUE 'NÃO'.
+ 000033          03 LT-SIM          PICX(03)   VALUE 'SIM'.
+ 000034        PROCEDURE DIVISON.
+ 000035        LP-LOGICA-PRINCIPAL SECTION.
+ 000036        LP-INICIO.
+ 000037       *******************************************************
+ 000038       *  L O G I C A  P R I N C I P A L                     *
+ 000039       *******************************************************
+ 000040          PERFORM A-INICIALIZACAO.
+ 000041          PERFORM B-OBTEM-PARAMETROS.
+ 000042          PERFORM RA-LEITURA-ARQUIVO.
+ 000043          PERFORM LP.AUX1-CONTROLA-SELECAO UNTIL FL-FIM-ARQUIVO
+ 000044                                         EQUAL LT-SIM.
+ 000045          PERFORM E-FINALIZACAO.
+ 000046        LP-LOGICA-PRINCIPAL-FIM.
+ 000047          STOP RUN.
+ 000048        LP-AUX1-CONTROLA-SELECAO SECTION.
+ 000049        LP-AUX1-INICIO.
+ 000050       ******************************************************
+ 000051       * CONTROLA LOOPING ENTRE MODULOS DE PRIMEIRO NIVEL   *
+ 000052       ******************************************************
+ 000053
+ 000054          MOVE LT-NAO TO FL-REG-SELECIONADO.
+ 000055          PERFORM C-SELECIONA.REGISTOS.
+ 000056          IF FL-REG-SELECIONADO EQUAL LT-SIM
+ 000057             PERFORM D-PROCESSA-SELECIONADO.
+ 000058          PERFORM RA-LEITURA-ARQUIVO.
+ 000059        LP-AUX1-CONTROLA-SELECAO-FIM.
+ 000060          EXIT.
+ 000061
+
+
+
+ 000001        ***********************************************************
+               *  COBCALC
+               *              
+               * A simple programs that allows financial functions to    *
+               * be performed using intrinsic functions.
+               * 
+               ***********************************************************
+                IDENTIFICATION DIVISON.
+                PROGRAM-ID. COBCALC.
+                ENVIRONMENT DIVISION.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01  PARM-1.
+                    05  CALL-FEEDBACK     PIC XX.
+                01  FIELDS.
+                    05  INPUT-1           PIC X(10).
+                01  INPUT-BUFFER-FIELDS.
+                    05  BUFFER-PTR        PIC 9.
+                    05  BUFFER DATA.
+                        10  FILLER        PIC X(10)  VALUE  "LOAN".
+                        10  FILLER        PIC X(10)  VALUE  "PVALUE"
+                        10  FILLER        PIC X(10)  VALUE  "pvalue"
+                        10  FILLER        PIC X(10)  VALUE  "END".
+                    05  BUFFER-ARRAY    REDEFINES BUFFER-DATA
+                                        OCCURS 4 TIMES
+                                          PIC X(10).
+                
+                PROCEDURE DIVISION.
+                    DISPLAY "CALC BEGINS." UPON CONSOLE.
+                    MOVE 1 TO BUFFER.PTR.
+                    MOVE SPACES TO INPUT-1.
+               * Keep processing data until END requested
+                    PERFORM ACCEPT-INPUT UNTIL INPUT-1 EQUAL TO END".
+               * END REQUESTED
+                    DISPLAY "CALC Ends." UPON CONSOLE.
+               * End of program.
+
+               *
+               * Accept input data from buffer
+               *
+                ACCEPT-INPUT.
+                    MOVE BUFFER-ARRAY (BUFFER PTR) TO INPUT-1.
+                    ADD 1 BUFFER-PTR GIVING BUFFER-PTR.
+               * Allow input data to be in UPPER or lower case
+                    EVALUATE FUNCTION UPPER-CASE(INPUT-1)     CALC1
+                      WHEN "END"
+                        MOVE "END" TO INPUT-1
+                      WHEN "LOAN"
+                        PERFORM CALCULATE-LOAN
+                      WHEN "PVALUE"
+                        PERFORM CALCULATE-VALUE
+                      WHEN OTHER
+                        DISPLAY "Invalid input: " INPUT-1
+                    END EVALUATE.
+               *
+               * Calculate Loan via CALL to subprograma
+               *
+                CALCULATE-LOAN.
+                    CALL "COBLOAN" SING CALL-FEEDBACK.
+                    IF CALL-FEEDBACK IS NOT EQUAL "OK" THEN
+                      DISPLAY "Call to COBLOAN Unsuccessful.".
+               *
+               * Calculate Present Value via CALL to subprograma
+               *
+                CALCULATE-VALUE.
+                    CALL "COBVALU" USING CALL-FEEDBACK.
+                    IF CALL-FEEDBACK IS NOT EQUAL "OK" THEN
+                      DISPLAY "Call to COBvalu Unsuccessful.".
+
+
+
+
+               *******************************************************
+               * COBLOAN
+               *
+               * A simple subprograma that calculates payment amount
+               * for a loan.
+               *
+               *******************************************************
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. COBLOAN.
+                ENVIRONMENT DIVISION.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01  FIELDS.
+                     05  INPUT-1           PIC X(26)
+                     05  PAYMENT           PIC S9(9)V99 USAGE COMP.
+                     05  PAYMENT-OUT       PIC $$$$,$$$,$$9,99 USAGE DISPLAY
+                     05  LOAN-AMOUNT       PIC S9(7)V99 USAGE COMP.
+                     05  LOAN-AMOUNT-IN    PIC X(16).
+                     05  INTEREST-IN       PIC X(5).
+                     05  INTEREST          PIC S9(3)V99 USAGE COMP.
+                     05  NO-OF-PERIODS-IN  PIC X(3).
+                     05  NO-OF-PERIODS     PIC 99 USAGE COMP.
+                     05  OUTPUT-LINE       PIC X(79).
+                                05  OUTPUT-LINE       PIC X(79). 
+                LINKAGE SECTION.
+                01  PARM-1.
+                     05  CALL-FEEDBACK     PIC XX.
+                PROCEDURE DIVISION USING PARM-1.
+                     MOVE "NO" TO CALL-FEEDBACK.
+                     MOVE "30000 .09 24 " TO INPUT-1.
+                     UNSTRING INPUT-1 DELIMITED BY ALL " "
+                       INTO LOAN-AMOUNT-IN INTEREST-IN NO-OF-PERIODS-IN.
+               * Convert to numeric values
+                     COMPUTE LOAN-AMOUNT = FUNCTION NUMVAL(LOAN-AMOUNT-IN).
+                     COMPUTE INTEREST = FUNCTION NUMVAL(INTEREST-IN).
+                     COMPUTE NO-OF-PERIODS = FUNCTION NUMVAL(NO-OF-PERIODS-IN).
+               * Calculate annuity amount required
+                     COMPUTE PAYMENT = LOAN-AMOUNT *
+                         FUNCTION ANNUITY((INTEREST / 12 ) NO-OF-PERIODS).
+               * Make it presentable
+                     MOVE SPACES TO OUTPUT-LINE
+                     MOVE PAYMENT TO PAYMENT-OUT.
+                     STRING "COBLOAN:_Repayment_amount_for_a_" NO-OF-PERIODS-IN
+                            "_month_loan_of_" LOAN-AMOUNT-IN
+                            "_at_" INTEREST-IN "_interest_is:_"
+                         DELIMITED BY SPACES
+                     INTO OUTPUT-LINE.
+                     INSPECT OUTPUT-LINE REPLACING ALL "_" BY SPACES.
+                     DISPLAY OUTPUT-LINE PAYMENT-OUT.
+                     MOVE "OK" TO CALL-FEEDBACK.
+                     GOBACK.
+                        
+
+       
