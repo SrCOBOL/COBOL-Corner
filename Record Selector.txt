@@ -9,7 +9,7 @@
  000006       SECURITY.
  000007       ****************************************
  000008       *                                      *
- 000009       * SELEÇÃO DE REGISTROS                 *
+ 000009       * SELEÇÃO DE REGISTOS                  *
  000010       *                                      *
  000011       ****************************************
  000012       ENVIRONMENT DIVISION.
@@ -22,7 +22,7 @@
  000019       WORKING-STORAGE SECTION.
  000020
  000022       *******************************************************
- 000023       * FLAGS UTILIZADAS PARA CONTROLE DA LOGICA DO PROGRAMA*
+ 000023       * FLAGS UTILIZADAS PARA CONTROLAR A LOGICA DO PROGRAMA*
  000024       *******************************************************
  000025          03 FL-FIM-ARQUIVO  PICX(03)   VALUE 'NÃO'.
  000026          03 FL-REG-SELECCIONADO  PICX(03)
